@@ -97,10 +97,13 @@ const config: PlaywrightTestConfig = {
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
 
-  webServer: {
+  webServer: [{
     command: 'npm run start',
     port: 3000,
-  },
+  }, {
+    command: '../bin/esmeta web',
+    port: 8080,
+  }],
 };
 
 export default config;
