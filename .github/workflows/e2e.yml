@@ -1,0 +1,39 @@
+name: 'esmeta e2e'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  esmeta-e2e:
+    name: 'esmeta e2e'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Add to PATH
+        shell: bash
+        run: |
+          echo "ESMETA_HOME=$(pwd)/vendor/esmeta" >> $GITHUB_ENV
+      - name: download esmeta
+        run: |
+          mkdir -p "${ESMETA_HOME}"
+          git clone --branch dev --depth 1 https://github.com/es-meta/esmeta.git "${ESMETA_HOME}"
+          cd "${ESMETA_HOME}" && git submodule update --init --depth 1
+      - name: build esmeta
+        working-directory: ${{ env.ESMETA_HOME }}
+        run: sbt assembly
+      - name: Run e2e tests
+        run: |
+          cd $ESMETA_HOME/client
+          git remote add local $GITHUB_WORKSPACE
+          git fetch local --unshallow
+          git checkout local/${GITHUB_REF##*/}
+          npm ci
+          npx playwright install chromium --with-deps
+          npx playwright test --project=chromium
